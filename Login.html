@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Expense Tracker</title>
+    <style>
+      body {
+        background: #83a4d4;  /* fallback for old browsers */
+        background: -webkit-linear-gradient(to right, #b6fbff, #83a4d4);  /* Chrome 10-25, Safari 5.1-6 */
+        background: linear-gradient(to right, #b6fbff, #83a4d4); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        background-image: url("https://repository-images.githubusercontent.com/359581441/3e3eb800-df44-11eb-8541-30a6954cb3de");
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        background-size: cover;
+        background-position: center;
+        top: 1000px;
+      }
+      body h1{
+        text-align: center;
+        font-family: 'Optima', sans-serif;
+        color: black;
+      }
+      body h2{
+        text-align: center;
+        color: blue;
+      }
+      .form-container {
+        max-width: 500px;
+        margin: 0 auto;
+
+        padding: 50px;
+        box-shadow: 0px 0px 20px #ccc;
+        background-color: #fff;
+
+        position: absolute;
+        top: 25%;
+        left: 38%;
+        right: 1;
+      }
+      .form-control-label {
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: block;
+      }
+      .form-control {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+        font-size: 16px;
+      }
+      .btn {
+        width: 100%;
+        background-color: #0069D9;
+        color: #fff;
+        font-size: 18px;
+        padding: 10px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background-color: #0052A3;
+      }
+      .error {
+        color: red;
+        font-size: 14px;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 <h1 style="font-size:70px; background-color: #17BBDF; color: white; padding: 20px; width:100%;">Welcome to your expense tracker</h1>
+    <div class="form-container">
+      <h2>Expense Tracker</h2>
+      <form method="POST" action="/">
+        <label class="form-control-label" for="email">Email</label>
+        <input type="email" id="email" name="email" class="form-control">
+        <label class="form-control-label" for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control">
+        <button type="submit" class="btn">Login</button>
+        <div class="error"></div>
+      </form>
+      <p class="mt-2">Not a member? <a href= "Register">Create Account </a></p>
+    </div>
+  </body>
+</html>
