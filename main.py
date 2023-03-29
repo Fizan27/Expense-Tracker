@@ -306,7 +306,7 @@ def send_expense_report(email, month, q):
         # Create and save the summary graph
         summary_data = data[1:-1]
         summary_labels = columns[1:-1]
-        summary_graph_bytes = generate_summary_graph(summary_data, summary_labels)
+        summary_graph_bytes = create_summary_graph(summary_data, summary_labels)
         with open("summary_graph.png", "wb") as f:
             f.write(summary_graph_bytes.getvalue())
 
