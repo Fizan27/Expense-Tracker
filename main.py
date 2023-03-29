@@ -174,49 +174,6 @@ def calculate_budget_percentages(total_income, total_expenses, expenses_by_categ
 
     return needs_percentage, wants_percentage, savings_percentage
 
-
-def generate_expense_report_pdf(email, month):
-    # Retrieve the user's expense data for the given month
-    expenses_data = get_expenses_data(email, month)
-
-    if not expenses_data:
-        return None
-
-    # Generate the bar chart
-    fig, ax = plt.subplots()
-    categories = list(expenses_data.keys())
-    amounts = list(expenses_data.values())
-    ax.bar(categories, amounts)
-    ax.set_title(f'Expense Report for {month}')
-    ax.set_xlabel('Categories')
-    ax.set_ylabel('Amount')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig('expense_chart.png', dpi=300)
-    plt.close(fig)
-
-    # Create the PDF
-    pdf_file = f'expense_report_{month}.pdf'
-    doc = SimpleDocTemplate(pdf_file, pagesize=letter)
-
-    # Add the expense table
-    data = [['Category', 'Amount']] + [[k, v] for k, v in expenses_data.items()]
-    table = Table(data)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 14),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    doc.build([table])
-
-    return pdf_file
-
-
 def get_expenses_data(email, month):
     # Implement your logic for retrieving the expense data for the given month
     # For demonstration purposes, we will use a dummy dataset
@@ -234,38 +191,6 @@ def get_expenses_data(email, month):
     }
 
     return expenses_data
-
-def generate_pdf_report(user_data, email):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    # Add user data and graphs to the PDF
-    pdf.cell(200, 10, txt="Income and Expenses Report", ln=1, align="C")
-    pdf.cell(50, 10, 'Month', border=1)
-    pdf.cell(50, 10, 'Total Income', border=1)
-    pdf.cell(50, 10, 'Rent', border=1)
-    pdf.cell(50, 10, 'Utilities', border=1)
-    pdf.cell(50, 10, 'Groceries', border=1)
-    pdf.cell(50, 10, 'Gas', border=1)
-    pdf.cell(50, 10, 'Pets', border=1)
-    pdf.cell(50, 10, 'Other Needs', border=1)
-    pdf.cell(50, 10, 'Dining Out', border=1)
-    pdf.cell(50, 10, 'Vacation', border=1)
-    pdf.cell(50, 10, 'TV Streaming', border=1)
-    pdf.cell(50, 10, 'Clothing, Shoes, Accessories', border=1)
-    pdf.cell(50, 10, 'Total Expenses', border=1)
-    pdf.ln()
-
-    for value in data:
-        pdf.cell(50, 10, str(value), border=1)
-    pdf.ln()
-
-    # Save the PDF to a file
-    pdf_file = f"{email}_report.pdf"
-    pdf.output(pdf_file)
-    return pdf_file
-
 
 def send_expense_report(email, month, q):
     try:
