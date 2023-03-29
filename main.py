@@ -26,6 +26,15 @@ from email.utils import COMMASPACE
 from email import encoders
 from email.mime.application import MIMEApplication
 import smtplib
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email.utils import COMMASPACE
+from email import encoders
+import os
+import logging
+
 
 report_queue = Queue()
 
@@ -288,9 +297,9 @@ def send_expense_report(email, month, q):
         msg["From"] = "your_email@example.com"
         msg["To"] = email
 
-        with smtplib.SMTP("smtp.example.com", 587) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
-            server.login("your_email@example.com", "your_email_password")
+            server.login("fizanshamjith@gmail.com", "zdnxmetrubqncczy")
             server.send_message(msg)
 
         q.put(True)
