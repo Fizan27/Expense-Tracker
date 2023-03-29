@@ -242,7 +242,24 @@ def generate_pdf_report(user_data, email):
 
     # Add user data and graphs to the PDF
     pdf.cell(200, 10, txt="Income and Expenses Report", ln=1, align="C")
-    # ... (Add more content here, such as tables, images, etc.)
+    pdf.cell(50, 10, 'Month', border=1)
+    pdf.cell(50, 10, 'Total Income', border=1)
+    pdf.cell(50, 10, 'Rent', border=1)
+    pdf.cell(50, 10, 'Utilities', border=1)
+    pdf.cell(50, 10, 'Groceries', border=1)
+    pdf.cell(50, 10, 'Gas', border=1)
+    pdf.cell(50, 10, 'Pets', border=1)
+    pdf.cell(50, 10, 'Other Needs', border=1)
+    pdf.cell(50, 10, 'Dining Out', border=1)
+    pdf.cell(50, 10, 'Vacation', border=1)
+    pdf.cell(50, 10, 'TV Streaming', border=1)
+    pdf.cell(50, 10, 'Clothing, Shoes, Accessories', border=1)
+    pdf.cell(50, 10, 'Total Expenses', border=1)
+    pdf.ln()
+
+    for value in data:
+        pdf.cell(50, 10, str(value), border=1)
+    pdf.ln()
 
     # Save the PDF to a file
     pdf_file = f"{email}_report.pdf"
@@ -259,9 +276,10 @@ def send_expense_report(email, month, q):
             user_id, user_name = cur.fetchone()
 
             cur.execute("""
-            SELECT month, total_income, rent, utilities, groceries, gas, pets, other_needs, dining_out, vacation, tv_streaming, clothing_shoes_accessories
-            FROM expenses WHERE user_id = ? AND month = ?
-            """, (user_id, month))
+                SELECT month, total_income, rent, utilities, groceries, gas, pets, other_needs, dining_out, vacation, tv_streaming, clothing_shoes_accessories
+                FROM expenses WHERE user_id = ? AND month = ?
+                """, (user_id, month))
+
             data = cur.fetchone()
 
         if not data:
@@ -275,7 +293,7 @@ def send_expense_report(email, month, q):
 
         pdf.cell(200, 10, txt=f"Expense Report for {user_name} - {month}", ln=1, align="C")
 
-        columns = ['Month', 'Total Income', 'Rent', 'Utilities', 'Groceries', 'Gas', 'Pets', 'Other Needs', 'Dining Out', 'Vacation', 'TV Streaming', 'Clothing, Shoes, Accessories']
+        columns = ['Month', 'Total Income', 'Rent', 'Utilities', 'Groceries', 'Gas', 'Pets', 'Other Needs', 'Dining Out', 'Vacation', 'TV Streaming', 'Clothing, Shoes, Accessories', 'Total Expenses']
         for i, column in enumerate(columns):
             pdf.cell(50, 10, txt=column, border=1)
 
@@ -285,16 +303,28 @@ def send_expense_report(email, month, q):
 
         pdf.output("expense_report.pdf")
 
-        # Send the email
+        # Create and save the summary graph
+        summary_data = data[1:-1]
+        summary_labels = columns[1:-1]
+        summary_graph_bytes = generate_summary_graph(summary_data, summary_labels)
+        with open("summary_graph.png", "wb") as f:
+            f.write(summary_graph_bytes.getvalue())
+
+        # Send the email with expense report and summary graph
         with open("expense_report.pdf", "rb") as f:
-            attach = MIMEApplication(f.read(), _subtype="pdf")
-            attach.add_header("Content-Disposition", "attachment", filename="expense_report.pdf")
+            attach1 = MIMEApplication(f.read(), _subtype="pdf")
+            attach1.add_header("Content-Disposition", "attachment", filename="expense_report.pdf")
+
+        with open("summary_graph.png", "rb") as f:
+            attach2 = MIMEImage(f.read(), _subtype="png")
+            attach2.add_header("Content-Disposition", "attachment", filename="summary_graph.png")
 
         msg = MIMEMultipart()
-        msg.attach(MIMEText("Please find attached your expense report for the selected month."))
-        msg.attach(attach)
+        msg.attach(MIMEText("Please find attached your expense report and summary graph for the selected month."))
+        msg.attach(attach1)
+        msg.attach(attach2)
         msg["Subject"] = f"Expense Report for {month}"
-        msg["From"] = "your_email@example.com"
+        msg["From"] = "fizanshamjith@gmail.com"
         msg["To"] = email
 
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
