@@ -7,11 +7,12 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
       body {
-        background: #83a4d4;  /* fallback for old browsers */
-        background: -webkit-linear-gradient(to right, #b6fbff, #83a4d4);  /* Chrome 10-25, Safari 5.1-6 */
-        background: linear-gradient(to right, #b6fbff, #83a4d4); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        background: #2980B9;  /* fallback for old browsers */
+        background: -webkit-linear-gradient(to right, #FFFFFF, #6DD5FA, #2980B9);  /* Chrome 10-25, Safari 5.1-6 */
+        background: linear-gradient(to right, #FFFFFF, #6DD5FA, #2980B9); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      }db
+      }
       .container {
         text-align: center;
         padding-top: 50px;
@@ -39,13 +40,39 @@
       .logout-btn:hover {
         background-color: #0052A3;
       }
+      /* New button styles */
+      .large-btn {
+        width: 100%;
+        padding: 100px 0;
+        font-size: 32px;
+        margin-bottom: 20px;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      .form-page-btn {
+        background-image: url(https://geekflare.com/wp-content/uploads/2022/02/Best-Expense-TrackingManagement-Software-for-Small-and-Medium-Business-Owners.png);
+      }
+      .summary-page-btn {
+        background-image: url(https://replicate.delivery/pbxt/hQEZFHGuf93YJajmd27uN6FV2Hp2FJGFR8KQXSF0qJsMH3VIA/out..webp);
+      }
+      .report-creation-btn {
+        background-image: url('https://www.searchenginejournal.com/wp-content/uploads/2020/01/marketing-reports-5e0f54085b56c.png');
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>Welcome to Your Expense Tracker</h1>
       <h2>Start Tracking Your Expenses</h2>
-      <!-- Add any content you want to display on the home page here -->
+      <button class="large-btn form-page-btn" onclick="location.href='/form-page'">Form Page</button>
+      <button class="large-btn summary-page-btn" onclick="location.href='/summary-page'">Summary Page</button>
+      <button class="large-btn report-creation-btn" onclick="location.href='{{ url_for('report_creation') }}'">Report Creation</button>
       <button class="logout-btn" onclick="location.href='/'">Logout</button>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
