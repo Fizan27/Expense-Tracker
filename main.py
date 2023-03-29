@@ -1,9 +1,5 @@
-import os
-from io import BytesIO
 import base64
-import tempfile
 import io
-import datetime
 import sqlite3
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -11,39 +7,20 @@ import pandas as pd
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask import send_file
 from fpdf import FPDF
-from flask_mail import Mail, Message
+from flask_mail import Mail,
 import threading
 import time
 from queue import Queue
 from threading import Thread
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email.utils import COMMASPACE
-from email import encoders
 from email.mime.application import MIMEApplication
 import smtplib
-import smtplib
 from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
-from email.utils import COMMASPACE
-from email import encoders
 import os
-import logging
 from email.mime.image import MIMEImage
 import queue
 
 report_queue = queue.Queue()
-
-"""
-class graphs() 
-    
-
-"""
 
 
 def create_summary_graph(email, data, labels):
@@ -210,75 +187,60 @@ def send_expense_report(email, month, report_queue):
         if not data:
             return
 
-        # Add the report data to the queue
-        report_queue.put((email, data))
+        # Create a PDF report
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
 
-    except Exception as e:
-        print(e)
-        report_queue.put(None)
+        pdf.cell(200, 10, txt=f"Expense Report for {user_name} - {month}", ln=1, align="C")
 
-def process_report_queue(report_queue):
-    while True:
-        task = report_queue.get()
-        if task is None:
-            break
+        columns = ['Month', 'Total Income', 'Rent', 'Utilities', 'Groceries', 'Gas', 'Pets', 'Other Needs',
+                   'Dining Out', 'Vacation', 'TV Streaming', 'Clothing, Shoes, Accessories', 'Total Expenses']
 
-        email, data = task
-        try:
-            # Create a PDF report
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", size=12)
+        # Print the month in the first row
+        pdf.cell(80, 10, txt=data[0], border=1, ln=1)
 
-            pdf.cell(200, 10, txt=f"Expense Report for {user_name} - {month}", ln=1, align="C")
+        # Set the column widths
+        col_width1 = 80
+        col_width2 = 40
 
-            columns = ['Month', 'Total Income', 'Rent', 'Utilities', 'Groceries', 'Gas', 'Pets', 'Other Needs',
-                       'Dining Out', 'Vacation', 'TV Streaming', 'Clothing, Shoes, Accessories', 'Total Expenses']
-
-            # Print the month in the first row
-            pdf.cell(80, 10, txt=data[0], border=1, ln=1)
-
-            # Set the column widths
-            col_width1 = 80
-            col_width2 = 40
-
-            # Print the expense data in two columns below the month
-            for i in range(1, len(data), 2):
-                pdf.cell(col_width1, 10, txt=columns[i], border=1)
-                pdf.cell(col_width2, 10, txt=str(data[i]), border=1)
-                pdf.ln()
-                if i + 1 < len(data):
-                    pdf.cell(col_width1, 10, txt=columns[i + 1], border=1)
-                    pdf.cell(col_width2, 10, txt=str(data[i + 1]), border=1)
-                    pdf.ln()
-
-            # Print the total expenses in a separate row at the bottom
-            total_expenses = sum(data[2:-1])
-            pdf.cell(col_width1, 10, txt="Total Expenses", border=1)
-            pdf.cell(col_width2, 10, txt=str(total_expenses), border=1)
+        # Print the expense data in two columns below the month
+        for i in range(1, len(data), 2):
+            pdf.cell(col_width1, 10, txt=columns[i], border=1)
+            pdf.cell(col_width2, 10, txt=str(data[i]), border=1)
             pdf.ln()
+            if i + 1 < len(data):
+                pdf.cell(col_width1, 10, txt=columns[i + 1], border=1)
+                pdf.cell(col_width2, 10, txt=str(data[i + 1]), border=1)
+                pdf.ln()
 
-            pdf.output("expense_report.pdf")
-            # Create and save the summary graph
-            summary_data = data[1:-1]
-            summary_labels = columns[1:-1]
-            summary_graph_bytes = create_summary_graph(email, summary_data, summary_labels)
-            with open("summary_graph.png", "wb") as f:
-                f.write(summary_graph_bytes.getvalue())
+        # Print the total expenses in a separate row at the bottom
+        total_expenses = sum(data[2:-1])
+        pdf.cell(col_width1, 10, txt="Total Expenses", border=1)
+        pdf.cell(col_width2, 10, txt=str(total_expenses), border=1)
+        pdf.ln()
 
-            # Create and save the pie chart
-            pie_chart_bytes = create_expense_pie_chart(email, month)
-            if not pie_chart_bytes:
-                report_queue.put(False)
-                return
-            with open("pie_chart.png", "wb") as f:
-                f.write(base64.b64decode(pie_chart_bytes))
+        pdf.output("expense_report.pdf")
 
-            # Send the email with expense report, summary graph and pie chart
-            with open("expense_report.pdf", "rb") as f:
-                attach1 = MIMEApplication(f.read(), _subtype="pdf")
-                attach1.add_header("Content-Disposition", "attachment", filename="expense_report.pdf")
+        # Create and save the summary graph
+        summary_data = data[1:-1]
+        summary_labels = columns[1:-1]
+        summary_graph_bytes = create_summary_graph(email, summary_data, summary_labels)
+        with open("summary_graph.png", "wb") as f:
+            f.write(summary_graph_bytes.getvalue())
 
+        # Create and save the pie chart
+        pie_chart_bytes = create_expense_pie_chart(email, month)
+        if not pie_chart_bytes:
+            report_queue.put((email, False))
+            return
+        with open("pie_chart.png", "wb") as f:
+            f.write(base64.b64decode(pie_chart_bytes))
+
+        # Send the email with expense report, summary graph and pie chart
+        with open("expense_report.pdf", "rb") as f:
+            attach1 = MIMEApplication(f.read(), _subtype="pdf")
+            attach1.add_header("Content-Disposition", "attachment", filename="expense_report.pdf")
             with open("summary_graph.png", "rb") as f:
                 attach2 = MIMEImage(f.read(), _subtype="png")
                 attach2.add_header("Content-Disposition", "attachment", filename="summary_graph.png")
@@ -298,13 +260,50 @@ def process_report_queue(report_queue):
 
             with smtplib.SMTP("smtp.gmail.com", 587) as server:
                 server.starttls()
-                server.login("fizanshamjith@gmail.com", "qxondylpfjftfcaq")
+                server.login("fizanshamjith@gmail.com", "qbpvdxvambvxwpma")
                 server.send_message(msg)
 
-            report_queue.put(True)
-        except Exception as e:
-            print(e)
-            report_queue.put(None)
+            report_queue.put((email, True))
+
+    except Exception as e:\
+    print(e)
+    report_queue.put((email, False))
+
+
+def process_report_queue(report_queue):
+    while True:
+        task = report_queue.get()
+        if task is None:
+            break
+
+        email, success = task
+        if success:
+            print(f"Expense report sent to {email}")
+        else:
+            print(f"Error sending expense report to {email}")
+
+        # simulate processing time
+        time.sleep(1)
+
+        report_queue.task_done()
+
+
+def process_report_queue(report_queue):
+    while True:
+        task = report_queue.get()
+        if task is None:
+            break
+
+        email, success = task
+        if success:
+            print(f"Expense report sent to {email}")
+        else:
+            print(f"Error sending expense report to {email}")
+
+        # simulate processing time
+        time.sleep(1)
+
+        report_queue.task_done()
 
 conn = sqlite3.connect("user.sqlite")
 cur = conn.cursor()
