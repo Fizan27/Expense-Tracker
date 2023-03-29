@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Creation</title>
+</head>
+<body>
+    <h1>Create Expense Report</h1>
+    <form action="{{ url_for('report_creation') }}" method="post">
+        <label for="month">Month:</label>
+        <input type="month" id="month" name="month" required>
+        <button type="submit">Generate Report</button>
+    </form>
+    {% if success %}
+    <p style="color: green;">Report has been sent to your email successfully.</p>
+    {% endif %}
+    {% if error %}
+    <p style="color: red;">An error occurred while sending the report. Please try again later.</p>
+    {% endif %}
+</body>
+</html>
