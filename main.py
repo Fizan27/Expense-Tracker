@@ -35,8 +35,9 @@ from email import encoders
 import os
 import logging
 from email.mime.image import MIMEImage
+import queue
 
-
+report_queue = queue.Queue()
 
 """
 class graphs() 
