@@ -38,8 +38,6 @@ from email.mime.image import MIMEImage
 
 
 
-q= Queue()
-
 """
 class graphs() 
     
@@ -351,7 +349,7 @@ def send_expense_report(email, month, q):
             attach3.add_header("Content-Disposition", "attachment", filename="pie_chart.png")
 
         # Add the PDF report and email to the report queue for processing
-        report_queue.put((email, {"month": month, "data": data}))
+        report_queue.put((email, data))
 
         msg = MIMEMultipart()
         msg.attach(MIMEText("Please find attached your expense report and summary graph for the selected month."))
@@ -373,7 +371,7 @@ def send_expense_report(email, month, q):
         print(e)
         q.put(False)
 
-def process_report_queue():
+def process_report_queue(report_queue):
     while True:
         task = report_queue.get()
         if task is None:
@@ -710,5 +708,5 @@ def home():
 
 if __name__=='__main__':
     app.run(debug=True)
-    report_queue_thread = threading.Thread(target=process_report_queue)
-    report_queue_thread.start()
+    report_thread = threading.Thread(target=process_report_queue)
+    report_thread.start()
