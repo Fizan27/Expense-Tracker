@@ -255,12 +255,12 @@ def send_expense_report(email, month, report_queue):
             msg.attach(attach2)
             msg.attach(attach3)
             msg["Subject"] = f"Expense Report and Summary Graphs for {month}"
-            msg["From"] = "fizanshamjith@gmail.com"
+            msg["From"] = "@gmail.com"
             msg["To"] = email
 
             with smtplib.SMTP("smtp.gmail.com", 587) as server:
                 server.starttls()
-                server.login("fizanshamjith@gmail.com", "qbpvdxvambvxwpma")
+                server.login("", "")
                 server.send_message(msg)
 
             report_queue.put((email, True))
