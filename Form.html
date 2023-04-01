@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker Form</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #2980B9;  /* fallback for old browsers */
+            background: -webkit-linear-gradient(to right, #FFFFFF, #6DD5FA, #2980B9);  /* Chrome 10-25, Safari 5.1-6 */
+            background: linear-gradient(to right, #FFFFFF, #6DD5FA, #2980B9); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+            padding: 30px;
+        }
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f4f4f4;
+            padding: 30px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 20px #ccc;
+        }
+        h2 {
+            font-family: 'Optima', sans-serif;
+            color: #0052A3;
+            font-size: 32px;
+            margin-bottom: 30px;
+        }
+        label {
+            font-weight: bold;
+        }
+    </style>
+    <script>
+      // The updated JavaScript code goes here
+      document.addEventListener("DOMContentLoaded", function () {
+        const monthInput = document.getElementById("month");
+        monthInput.addEventListener("change", function () {
+          fetch(`/get-expenses?month=${monthInput.value}`)
+            .then((response) => response.json())
+            .then((data) => {
+              document.getElementById("total-income").value = data.total_income || "";
+              document.getElementById("rent").value = data.rent || "";
+              document.getElementById("utilities").value = data.utilities || "";
+              document.getElementById("groceries").value = data.groceries || "";
+              document.getElementById("gas").value = data.gas || "";
+              document.getElementById("pets").value = data.pets || "";
+              document.getElementById("other-needs").value = data.other_needs || "";
+              document.getElementById("dining-out").value = data.dining_out || "";
+              document.getElementById("vacation").value = data.vacation || "";
+              document.getElementById("tv-streaming").value = data.tv_streaming || "";
+              document.getElementById("clothing-shoes-accessories").value = data.clothing_shoes_accessories || "";
+            });
+        });
+
+        // Trigger the change event to fetch expenses for the current month when the page loads
+        monthInput.dispatchEvent(new Event("change"));
+      });
+    </script>
+</head>
+<body>
+    <div class="form-container">
+       <h3>Welcome, {{ user_name }}</h3>
+        <h2>Expense Tracker Form</h2>
+        <form method="POST" action="{{ url_for('form_page') }}" id="expense-form">
+            <div class="form-group">
+                <label for="month">Month</label>
+                <input type="month" class="form-control" id="month" name="month" required>
+            </div>
+            <div class="form-group">
+                <label for="total-income">Total Income</label>
+                <input type="number" step="0.01" class="form-control" id="total-income" name="total_income" required>
+            </div>
+            <div class="form-group">
+                <label for="rent">Rent</label>
+                <input type="number" step="0.01" class="form-control" id="rent" name="rent">
+            </div>
+            <div class="form-group">
+                <label for="utilities">Utilities - Water and Electricity</label>
+                <input type="number" step="0.01" class="form-control" id="utilities" name="utilities">
+            </div>
+            <div class="form-group">
+                <label for="groceries">Groceries</label>
+                <input type="number" step="0.01" class="form-control" id="groceries" name="groceries">
+            </div>
+            <div class="form-group">
+                <label for="gas">Gas</label>
+                <input type="number" step="0.01" class="form-control" id="gas" name="gas">
+            </div>
+            <div class="form-group">
+                <label for="pets">Pets</label>
+                <input type="number" step="0.01" class="form-control" id="pets" name="pets">
+            </div>
+            <div class="form-group">
+                <label for="other-needs">Other Needs</label>
+                <input type="number" step="0.01" class="form-control" id="other-needs" name="other_needs">
+            </div>
+            <div class="form-group">
+                <label for="dining-out">Dining Out</label>
+                <input type="number" step="0.01" class="form-control" id="dining-out" name="dining_out">
+            </div>
+            <div class="form-group">
+                <label for="vacation">Vacation</label>
+                <input type="number" step="0.01" class="form-control" id="vacation" name="vacation">
+            </div>
+            <div class="form-group">
+                <label for="tv-streaming">TV/Streaming Services</label>
+                <input type="number" step="0.01" class="form-control" id="tv-streaming" name="tv_streaming">
+            </div>
+            <div class="form-group">
+            <label for="clothing-shoes-accessories">Clothing, shoes, accessories</label>
+            <input type="number" step="0.01" class="form-control" id="clothing-shoes-accessories" name="clothing_shoes_accessories">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button onclick="location.href='{{ url_for('home') }}'" class="btn btn-primary">Home</button>
+        </form>
+    </div>
+    <script>
+        function updateFormValues(data) {
+            for (const [key, value] of Object.entries(data)) {
+                $(`#${key.replace('_', '-')}`).val(value);
+            }
+        }
+
+        function fetchExpenses() {
+            const month = $('#month').val();
+            $.ajax({
+                url: `{{ url_for('get_expenses') }}?month=${month}`,
+                success: function(data) {
+                    updateFormValues(data);
+                },
+                error: function() {
+                    console.error('Error fetching expenses');
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            $('#month').on('change', fetchExpenses);
+            fetchExpenses();
+        });
+    </script>
+</body>
+</html>

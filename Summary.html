@@ -59,11 +59,17 @@
             </div>
         </div>
         <hr>
-        <div class="budget-percentages">
-            <h3>Budget Percentages</h3>
-            <p>Needs: {{ '{:.1f}'.format(needs_percentage, 1) }}%</p>
-            <p>Wants: {{ '{:.1f}'.format(wants_percentage, 1) }}%</p>
-            <p>Savings and Investments: {{ '{:.1f}'.format(savings_and_investments_percentage, 1) }}%</p>
+        <div class="container">
+            <div class="expense-categories">
+                <h2>Expense Categories</h2>
+                {{ expense_categories_html | safe }}
+            </div>
+            <div class="budget-percentages">
+                <h2>Budget Percentages</h2>
+                <p>Needs: {{ '{:.1f}'.format(needs_percentage, 1) }}%</p>
+                <p>Wants: {{ '{:.1f}'.format(wants_percentage, 1) }}%</p>
+                <p>Savings and Investments: {{ '{:.1f}'.format(savings_and_investments_percentage, 1) }}%</p>
+            </div>
         </div>
         <div class="container">
             <h2>Recommendations</h2>
@@ -72,6 +78,11 @@
             {% else %}
                 <p>No recommendations at this time.</p>
             {% endif %}
+           <div class="container">
+                <h2>Highest and lowest expenditure</h2>
+                <p>The category you spent the most on this month was: {{ max_expense_category }}</p>
+                <p>The category you spent the least on this month was: {{ min_expense_category }}</p>
+           </div>
             <h2>Summary of Income and Expenses</h2>
             <p>Total Income: ${{ income }}</p>
             <p>Total Expenses: ${{ total_expenses }}</p>
@@ -80,7 +91,7 @@
         <hr>
         {% if b64_pie_chart %}
         <div class="pie-chart-container">
-            <h3>Expenses Breakdown</h3>
+            <h2>Expenses Breakdown</h2>
             <img src="data:image/png;base64,{{ b64_pie_chart }}" style="max-width: 100%;" />
         </div>
         {% endif %}
