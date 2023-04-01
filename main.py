@@ -7,10 +7,9 @@ import pandas as pd
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask import send_file
 from fpdf import FPDF
-from flask_mail import Mail,
+from flask_mail import Mail
 import threading
 import time
-from queue import Queue
 from threading import Thread
 from email.mime.application import MIMEApplication
 import smtplib
@@ -19,9 +18,78 @@ from email.mime.text import MIMEText
 import os
 from email.mime.image import MIMEImage
 import queue
+from queue import Queue
+import logging
+# For documentation
+import warnings
+warnings.filterwarnings("ignore")
 
-report_queue = queue.Queue()
 
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+
+class TreeNode:
+    def __init__(self, value, children=None):
+        self.value = value
+        self.children = children if children is not None else []
+
+    def insert_child(self, child_value):
+        child = TreeNode(child_value)
+        self.children.append(child)
+        return child
+
+    def delete_child(self, child_value):
+        for i, child in enumerate(self.children):
+            if child.value == child_value:
+                del self.children[i]
+                return True
+        return False
+
+    def search_child(self, child_value):
+        for child in self.children:
+            if child.value == child_value:
+                return child
+        return None
+
+
+def create_expense_tree():
+    expense_tree = TreeNode("Expenses")
+    housing = expense_tree.insert_child("Housing")
+    housing.insert_child("Rent")
+    housing.insert_child("Utilities")
+
+    food = expense_tree.insert_child("Food")
+    food.insert_child("Groceries")
+    food.insert_child("Dining Out")
+
+    transportation = expense_tree.insert_child("Transportation")
+    transportation.insert_child("Gas")
+
+    entertainment = expense_tree.insert_child("Entertainment")
+    entertainment.insert_child("TV Streaming")
+    entertainment.insert_child("Vacation")
+
+    miscellaneous = expense_tree.insert_child("Miscellaneous")
+    miscellaneous.insert_child("Clothing, Shoes & Accessories")
+    miscellaneous.insert_child("Pets")
+    miscellaneous.insert_child("Other Needs")
+
+    return expense_tree
+
+
+def dfs_traversal_html(node):
+    html = "<ul>"
+    html += f"<li>{node.value}"
+    for child in node.children:
+        html += dfs_traversal_html(child)
+    html += "</li></ul>"
+    return html
+
+expense_tree = create_expense_tree()
+expense_categories_html = dfs_traversal_html(expense_tree)
 
 def create_summary_graph(email, data, labels):
     with sqlite3.connect("user.sqlite") as conn:
@@ -151,6 +219,7 @@ def calculate_budget_percentages(total_income, total_expenses, expenses_by_categ
 
     return needs_percentage, wants_percentage, savings_percentage
 
+# split into multiple methods
 def get_expenses_data(email, month):
     # Implement your logic for retrieving the expense data for the given month
     # For demonstration purposes, we will use a dummy dataset
@@ -220,7 +289,14 @@ def send_expense_report(email, month, report_queue):
         pdf.cell(col_width2, 10, txt=str(total_expenses), border=1)
         pdf.ln()
 
-        pdf.output("expense_report.pdf")
+        # pdf.output("expense_report.pdf") # same name
+        # path = os.getcwd() # no hardcoding
+        # pdf.output(path + f"/reports/expense_report_{user_name}.pdf")
+        pdf.output(f"/Users/Fizan/PycharmProjects/fromwindows/reports/expense_report_{user_name}.pdf")
+
+       # this would be a queue
+        # if the limit reaches -> 10
+        # you want to remove the last one
 
         # Create and save the summary graph
         summary_data = data[1:-1]
@@ -255,55 +331,37 @@ def send_expense_report(email, month, report_queue):
             msg.attach(attach2)
             msg.attach(attach3)
             msg["Subject"] = f"Expense Report and Summary Graphs for {month}"
-            msg["From"] = "@gmail.com"
+            # cange the email
+            msg["From"] = "expensetrackersender@gmail.com"
             msg["To"] = email
 
             with smtplib.SMTP("smtp.gmail.com", 587) as server:
                 server.starttls()
-                server.login("", "")
+                # create a fake email
+                server.login("expensetrackersender@gmail.com", "jioijrzinwibvfrg")
                 server.send_message(msg)
 
-            report_queue.put((email, True))
+            report_queue.put((email, month, True))
 
-    except Exception as e:\
-    print(e)
-    report_queue.put((email, False))
-
-
-def process_report_queue(report_queue):
-    while True:
-        task = report_queue.get()
-        if task is None:
-            break
-
-        email, success = task
-        if success:
-            print(f"Expense report sent to {email}")
-        else:
-            print(f"Error sending expense report to {email}")
-
-        # simulate processing time
-        time.sleep(1)
-
-        report_queue.task_done()
-
+    except Exception as e:
+        print(e)
+        report_queue.put((email, False))
 
 def process_report_queue(report_queue):
+    # Configure the logging module
+    # mention this in the documentation
+    logging.basicConfig(filename='expense_report.log', level=logging.INFO,
+                        format='%(asctime)s:%(levelname)s:%(message)s')
+
     while True:
-        task = report_queue.get()
-        if task is None:
-            break
+        email, month, success = report_queue.get()
 
-        email, success = task
         if success:
-            print(f"Expense report sent to {email}")
+            logging.info(f"Expense report for {month} successfully sent to {email}.")
         else:
-            print(f"Error sending expense report to {email}")
+            logging.error(f"Failed to send expense report for {month} to {email}.")
 
-        # simulate processing time
-        time.sleep(1)
-
-        report_queue.task_done()
+        time.sleep(1)  # Sleep for a short duration to avoid excessive CPU usage
 
 conn = sqlite3.connect("user.sqlite")
 cur = conn.cursor()
@@ -335,6 +393,7 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USE_TLS'] = False
+# os is a module to represent environment variables
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 mail = Mail(app)
@@ -413,32 +472,40 @@ def form_page():
 
             month = form_data.get("month", None)
 
-            # Save the new expense data
-            cur.execute(
-                """
+        with sqlite3.connect("user.sqlite") as conn:
+            cur = conn.cursor()
+
+            # Check if there's already an entry for the given month
+            cur.execute("SELECT * FROM expenses WHERE user_id = ? AND month = ?", (user_id, month))
+            existing_entry = cur.fetchone()
+
+            if existing_entry:
+                flash("Expenses for the selected month have already been submitted.")
+                return redirect(url_for("form_page"))  # Add this line
+            else:
+                # Save the new expense data
+                cur.execute("""
                 INSERT INTO expenses (
-                    user_id, 
-                    month, 
-                    total_income, 
-                    rent, 
-                    utilities, 
-                    groceries, 
-                    gas, 
-                    pets, 
-                    other_needs, 
-                    dining_out, 
-                    vacation, 
-                    tv_streaming, 
+                    user_id,
+                    month,
+                    total_income,
+                    rent,
+                    utilities,
+                    groceries,
+                    gas,
+                    pets,
+                    other_needs,
+                    dining_out,
+                    vacation,
+                    tv_streaming,
                     clothing_shoes_accessories
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (user_id, month, form_data["total_income"], form_data["rent"], form_data["utilities"],
-                      form_data["groceries"], form_data["gas"], form_data["pets"], form_data["other_needs"],
-                      form_data["dining_out"], form_data["vacation"], form_data["tv_streaming"],
-                      form_data["clothing_shoes_accessories"]))
-            conn.commit()
-            # Update the form_data and redirect to the form page
-            session["form_data"] = form_data
-            return redirect(url_for("form_page"))
+                """, (user_id, month, form_data["total_income"], form_data["rent"], form_data["utilities"], form_data["groceries"], form_data["gas"], form_data["pets"], form_data["other_needs"], form_data["dining_out"], form_data["vacation"], form_data["tv_streaming"], form_data["clothing_shoes_accessories"]))
+                conn.commit()
+
+                # Update the form_data and redirect to the form page
+                session["form_data"] = form_data
+                return redirect(url_for("form_page"))
 
     # If form_data is empty, set the month to the current month
     if not form_data:
@@ -446,6 +513,7 @@ def form_page():
         form_data["month"] = datetime.today().strftime("%Y-%m")
 
     return render_template("Form.html", form_data=form_data, user_name=user_name)
+
 
 def get_user_name(email):
     with sqlite3.connect("user.sqlite") as conn:
@@ -464,7 +532,7 @@ def get_expenses():
 
         if month:
             cur.execute("""
-            SELECT users.name, expenses.month, expenses.total_income, expenses.total_expenses
+            SELECT users.name, expenses.month, expenses.total_income, expenses.rent, expenses.utilities, expenses.groceries, expenses.gas, expenses.pets, expenses.other_needs, expenses.dining_out, expenses.vacation, expenses.tv_streaming, expenses.clothing_shoes_accessories
             FROM users
             JOIN expenses ON users.id = expenses.user_id
             WHERE users.email = ? AND expenses.month = ?
@@ -473,13 +541,34 @@ def get_expenses():
 
             if expenses:
                 total_income = expenses[2]
-                total_expenses = expenses[3]
+                rent = expenses[3]
+                utilities = expenses[4]
+                groceries = expenses[5]
+                gas = expenses[6]
+                pets = expenses[7]
+                other_needs = expenses[8]
+                dining_out = expenses[9]
+                vacation = expenses[10]
+                tv_streaming = expenses[11]
+                clothing_shoes_accessories = expenses[12]
+
+                total_expenses = rent + utilities + groceries + gas + pets + other_needs + dining_out + vacation + tv_streaming + clothing_shoes_accessories
                 difference = total_income - total_expenses
 
                 return {
                     "name": expenses[0],
                     "month": expenses[1],
                     "total_income": total_income,
+                    "rent": rent,
+                    "utilities": utilities,
+                    "groceries": groceries,
+                    "gas": gas,
+                    "pets": pets,
+                    "other_needs": other_needs,
+                    "dining_out": dining_out,
+                    "vacation": vacation,
+                    "tv_streaming": tv_streaming,
+                    "clothing_shoes_accessories": clothing_shoes_accessories,
                     "total_expenses": total_expenses,
                     "difference": difference
                 }
@@ -580,8 +669,21 @@ def summary_page():
         labels = list(expenses_by_category.keys())
         total_expenses = sum(expenses_by_category.values())
         difference = total_income - total_expenses
-        # myGraph = graph()
-        # myGraph.create_summary_graph(email)
+
+        # Get the category with the highest and lowest expenses using aggregate functions
+        cur.execute(
+            "SELECT MAX(rent), MAX(utilities), MAX(groceries), MAX(gas), MAX(pets), MAX(other_needs), MAX(dining_out), MAX(vacation), MAX(tv_streaming), MAX(clothing_shoes_accessories) FROM expenses WHERE user_id = ? AND month = ?",
+            (user_id, month))
+        max_expense_row = cur.fetchone()
+        max_expense_value = max(max_expense_row)
+        max_expense_category = labels[max_expense_row.index(max_expense_value)]
+
+        cur.execute(
+            "SELECT MIN(rent), MIN(utilities), MIN(groceries), MIN(gas), MIN(pets), MIN(other_needs), MIN(dining_out), MIN(vacation), MIN(tv_streaming), MIN(clothing_shoes_accessories) FROM expenses WHERE user_id = ? AND month = ?",
+            (user_id, month))
+        min_expense_row = cur.fetchone()
+        min_expense_value = min(min_expense_row)
+        min_expense_category = labels[min_expense_row.index(min_expense_value)]
 
         # Create the summary graph
         img_bytes = create_summary_graph(email, data, labels)
@@ -597,8 +699,10 @@ def summary_page():
 
     return render_template("Summary.html", income=total_income, total_expenses=total_expenses, difference=difference,
                            b64_img=b64_img, recommendation=recommendation, b64_pie_chart=b64_pie_chart,
+                           max_expense_category=max_expense_category, min_expense_category=min_expense_category,
                            needs_percentage=needs_percentage, wants_percentage=wants_percentage,
-                           savings_and_investments_percentage=savings_and_investments_percentage)
+                           savings_and_investments_percentage=savings_and_investments_percentage,
+                           expense_categories_html=expense_categories_html)
 
 @app.route("/report-creation", methods=["GET", "POST"])
 def report_creation():
@@ -611,12 +715,12 @@ def report_creation():
             month = datetime.today().strftime("%Y-%m")
 
         # Generate the expense report and send it to the user's email
-        q = Queue()
-        t = Thread(target=send_expense_report, args=(email, month, q))
+        # multi threading -> concurrency
+        t = Thread(target=send_expense_report, args=(email, month, report_queue))
         t.start()
-        t.join()
+        t.join() # run
 
-        if q.get():
+        if report_queue.get():
             return render_template("Reportcreation.html", success=True)
         else:
             return render_template("Reportcreation.html", error=True)
@@ -627,6 +731,13 @@ def home():
     return render_template('Home.html')
 
 if __name__=='__main__':
-    app.run(debug=True)
-    report_thread = threading.Thread(target=process_report_queue)
+    # Create the report_queue
+    # class of queue
+    report_queue = queue.Queue()
+    # Start the process_report_queue function in a separate thread
+    # mult-threading
+    report_thread = threading.Thread(target=process_report_queue, args=(report_queue,))
     report_thread.start()
+
+    # Start the Flask app
+    app.run(debug=True)
